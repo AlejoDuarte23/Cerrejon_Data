@@ -145,6 +145,7 @@ def plot_all_measurements():
 		
         except:
                 print('skiped',' _file_names[j]')
+
     return data_123
 
 
@@ -164,7 +165,11 @@ def plt_all_measurements2():
                 data_123 = get_alldata(selected_chanels,data_section)
                 resampled_data_123 = resample_data(data_123, 1000, 1)
                 _header = ["Date, Gauge 111, Gauge 112, Gauge 113, Gauge 331,Gauge 332,Gauge 333, Gauge 441,Gauge 442,Gauge 443"]
-                np.savetxt(f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv", resampled_data_123, fmt="%s", delimiter=",", header=_header, comments="")
+                
+                output_path = folder_output + f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv"
+
+                np.savetxt(output_path, resampled_data_123,
+                           fmt="%s", delimiter=",", header=_header, comments="")
                 ploting_chanels(selected_chanels, resampled_data_123)
                 title_fid = 'Gauges ' + str(selected_chanels) + _file_names[j][-20:]
                 plt.title('Gauges ' + str(selected_chanels) + _file_names[j][-20:])
@@ -175,13 +180,9 @@ def plt_all_measurements2():
                 print('skiped',' _file_names[j]')
  
 
-def plt_all_measurements3(file_names,PLT = False):
+def plt_all_measurements3(file_names,folder_output, PLT = False):
     _file_names = file_names
-    # _file_names = file_nameautomate()
     rosettes = [[1,2,3,4,5,6,7,8,9,10,11,11,13,14,15]]  
- # rosettes = [[1,2,3]]  
-    # for j in range(1):
-
     for j in range(len(_file_names)):
         dw.LoadFile(_file_names[j])
         time.sleep(10)
@@ -194,8 +195,11 @@ def plt_all_measurements3(file_names,PLT = False):
                 resampled_data_123 = resample_data(data_123, 1000, 1)
                 resampled_data_123['data12'] *= math.sqrt(2)/2
                 # plt.plot(resampled_data_123)
+                
+                output_path = folder_output + f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv"
                 _header = "Date, Gauge 111, Gauge 112, Gauge 113, Gauge 331,Gauge 332,Gauge 333, Gauge 441,Gauge 442,Gauge 443,Gauge 991,Gauge 992,Gauge 993,Gauge 1011, Gauge 1012, Gauge 1013"
-                np.savetxt(f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv", resampled_data_123, fmt="%s", delimiter=",", header=_header, comments="")
+                np.savetxt(output_path, resampled_data_123,
+                           fmt="%s", delimiter=",", header=_header, comments="")
                 if PLT == True:    
                     ploting_chanels(selected_chanels, resampled_data_123)
                     title_fid = 'Gauges ' + str(selected_chanels) + _file_names[j][-20:]
@@ -204,15 +208,9 @@ def plt_all_measurements3(file_names,PLT = False):
                     plt.close('all')
             
         except:
-                print('skiped',' _file_names[j]')
+                output_path = folder_output + f"resampled_data_{_file_names[0][-20:]}_rosette_{i+1}.csv"
+                print(output_path)
  
-# data_section = datasections_engine();dump = get_alldata([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],data_section)
-# file_names = file_nameautomate()
-
-# data_section = datasections_engine();dump = get_alldata([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],data_section)
-
-# dump['timestamp'] = dump['timestamp'].astype('<M8[us]')
-# dump = dump[:100]
 
 
 
@@ -319,11 +317,13 @@ dw.Left = 0
 dw.Width = 1024 
 dw.Height = 768
 
-_dir = r"C:\Users\aleja\Documents\MAR 28\Set up 1 Cerrejon _00{}.dxd"
-a,b = 10,12
+_dir = r"C:\Users\aleja\Documents\Cerrejon Data Analyis\dxd_files\06.04.2023_dxd_files\Set up 1 Cerrejon _00{}.dxd"
+a,b = 1,5
 file_names = file_nameautomate(_dir, a, b)
-data123 = plt_all_measurements3(file_names)
+folder_output = file_names[0][:78] + "csv_06.04.2023/"
+data123 = plt_all_measurements3(file_names,folder_output)
 
+# 
 
 
         
