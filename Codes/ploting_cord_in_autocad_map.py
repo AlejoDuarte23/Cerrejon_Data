@@ -1,6 +1,4 @@
-
-
-
+import os
 import pandas as pd
 import pyautocad
 import math
@@ -65,7 +63,11 @@ def plot_cords_autocad(df,PLT = False):
 
 
 #  inputs
-file_route_name = 'Datos GPS equipo 022-429 - Mayo-22 hasta Abril-5 2023.xlsx'
+
+file_name = 'Datos GPS equipo 022-429 - Mayo-22 hasta Abril-5 2023.xlsx'
+file_route_name = os.path.join('..','Reference',file_name)
+
+# file_route_name = 'Datos GPS equipo 022-429 - Mayo-22 hasta Abril-5 2023.xlsx'
 
 sheet_names = ['20230322',
                '20230323',
