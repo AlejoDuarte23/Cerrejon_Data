@@ -120,65 +120,24 @@ def resample_data(data, old_fs, new_fs):
     return resampled_stacked_data
 
 
-def plot_all_measurements():
-
-    _file_names = file_nameautomate()
-    rosettes = [[1,2,3],[4,5,6],[7,8,9],[10,11,11],[13,14,15]]  
-    # rosettes = [[1,2,3]]  
+def tranform_set_up2(resampled_data_123):
+    coef3_1 = -0.47006209
+    coef2_1 =  -0.18279188
+    # new positio for 611 data 13
+    resampled_data_123['data13']  = resampled_data_123['data5'] 
+    # new positio for 612 data 14
+    resampled_data_123['data14']  = coef2_1*resampled_data_123['data13'] 
+    # new positio for 613 data 15
+    resampled_data_123['data15']  = coef3_1*resampled_data_123['data13'] 
     
-    for j in range(len(_file_names)):
-        try:
-            dw.LoadFile(_file_names[j])
-            time.sleep(15)
-        
-            for i in range(len(rosettes)):
-                selected_chanels = rosettes[i]
-                data_section = datasections_engine()
-                data_123 = get_alldata(selected_chanels,data_section)
-                resampled_data_123 = resample_data(data_123, 1000, 50)
-                np.savetxt(f"resampled_data_{_file_names[j][-20:]}_rosette_{i}.txt", resampled_data_123, fmt="%s", delimiter=",")
-                ploting_chanels(selected_chanels, resampled_data_123)
-                title_fid = 'Gauges ' + str(selected_chanels) + _file_names[j][-20:]
-                plt.title('Gauges ' + str(selected_chanels) + _file_names[j][-20:])
-                plt.savefig(title_fid+'.png', dpi=300)
-                plt.close('all')
-		
-        except:
-                print('skiped',' _file_names[j]')
+    #  new position for 883  // data10 is 881
+    resampled_data_123['data11']  = coef3_1*resampled_data_123['data9'] 
+    #  new position for 553  // data03 is 551
+    resampled_data_123['data5']  = coef3_1*resampled_data_123['data3'] 
+    return resampled_data_123
+    
 
-    return data_123
-
-
-def plt_all_measurements2():
-    _file_names = file_nameautomate()
-    rosettes = [[1,2,3],[4,5,6],[7,8,9],[10,11,11],[13,14,15]]  
- # rosettes = [[1,2,3]]  
- 
-    for j in range(len(_file_names)):
-        dw.LoadFile(_file_names[j])
-        time.sleep(10)
-        try:
-            for i in range(len(rosettes)):
-                
-                selected_chanels = rosettes[i]
-                data_section = datasections_engine()
-                data_123 = get_alldata(selected_chanels,data_section)
-                resampled_data_123 = resample_data(data_123, 1000, 1)
-                _header = ["Date, Gauge 111, Gauge 112, Gauge 113, Gauge 331,Gauge 332,Gauge 333, Gauge 441,Gauge 442,Gauge 443"]
-                
-                output_path = folder_output + f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv"
-
-                np.savetxt(output_path, resampled_data_123,
-                           fmt="%s", delimiter=",", header=_header, comments="")
-                ploting_chanels(selected_chanels, resampled_data_123)
-                title_fid = 'Gauges ' + str(selected_chanels) + _file_names[j][-20:]
-                plt.title('Gauges ' + str(selected_chanels) + _file_names[j][-20:])
-                plt.savefig(title_fid+'.png', dpi=300)
-                plt.close('all')
-            
-        except:
-                print('skiped',' _file_names[j]')
- 
+    
 
 def plt_all_measurements3(file_names,folder_output, PLT = False):
     _file_names = file_names
@@ -211,8 +170,41 @@ def plt_all_measurements3(file_names,folder_output, PLT = False):
                 output_path = folder_output + f"resampled_data_{_file_names[0][-20:]}_rosette_{i+1}.csv"
                 print(output_path)
  
+    
 
-
+def export_csc_set_up2(file_names,folder_output, PLT = False):
+    _file_names = file_names
+    rosettes = [[1,2,3,4,5,6,7,8,9,10,11,11,13,14,15]]  
+    for j in range(len(_file_names)):
+        dw.LoadFile(_file_names[j])
+        time.sleep(10)
+        try:
+            for i in range(len(rosettes)):
+                
+                selected_chanels = rosettes[i]
+                data_section = datasections_engine()
+                data_123 = get_alldata(selected_chanels,data_section)
+                resampled_data_123 = resample_data(data_123, 1000, 1)
+                resampled_data_123 = tranform_set_up2(resampled_data_123)
+                # plt.plot(resampled_data_123)
+                
+                output_path = folder_output + f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv"
+                _header = "Date, Gauge 111, Gauge 112, Gauge 113, Gauge 331,Gauge 332,Gauge 333, Gauge 441,Gauge 442,Gauge 443,Gauge 991,Gauge 992,Gauge 993,Gauge 1011, Gauge 1012, Gauge 1013"
+                np.savetxt(output_path, resampled_data_123,
+                           fmt="%s", delimiter=",", header=_header, comments="")
+                if PLT == True:    
+                    ploting_chanels(selected_chanels, resampled_data_123)
+                    title_fid = 'Gauges ' + str(selected_chanels) + _file_names[j][-20:]
+                    plt.title('Gauges ' + str(selected_chanels) + _file_names[j][-20:])
+                    plt.savefig(title_fid+'.png', dpi=300)
+                    plt.close('all')
+            
+        except:
+                output_path = folder_output + f"resampled_data_{_file_names[0][-20:]}_rosette_{i+1}.csv"
+                print(output_path)
+ 
+    
+ 
 
 def BB(dump):
     columns = ['Timestamp', 'AI A-1', 'AI A-2', 'AI A-3', 'AI A-4', 'AI A-5', 'AI A-6', 'AI A-7', 'AI A-8', 'AI B-1', 'AI B-2', 'AI B-3', 'AI B-4', 'AI B-5', 'AI B-6', 'AI B-7']
@@ -306,6 +298,9 @@ def BB2(dump):
         elapsed_time = end_time - start_time
         print(f"Elapsed time: {elapsed_time} seconds")
 
+
+
+
 # create the Dewesoft DCOM object
 dw = Dispatch("Dewesoft.App")
 sys.stdout.flush()
@@ -320,10 +315,19 @@ dw.Height = 768
 _dir = r"C:\Users\aleja\Documents\Cerrejon Data Analyis\dxd_files\06.04.2023_dxd_files\Set up 1 Cerrejon _00{}.dxd"
 a,b = 1,71
 file_names = file_nameautomate(_dir, a, b)
-folder_output = file_names[0][:78] + "csv_06.04.2023/"
-data123 = plt_all_measurements3(file_names,folder_output)
+# folder_output = file_names[0][:78] + "csv_06.04.2023/"
+# data123 = plt_all_measurements3(file_names,folder_output)
+dw.LoadFile(file_names[3])
+channels  = [7,8,9]
+data_section = datasections_engine()
+stacked_data =  get_alldata(channels,data_section)
+data_rs1 = resample_data(stacked_data, 1000, 1)
+ploting_chanels(channels,data_rs1)
+# ploting_chanels(selected_chanels,stacked_data)
 
-
-
+arr = np.array([tuple(x) for x in data_rs1[['data0', 'data1', 'data2']]], dtype=np.float64)
+means = np.mean(arr, axis=0)
+mean_data0 = np.mean(arr['data0'])
+normalized_means = means / mean_data0
 
         
