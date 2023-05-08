@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np 
-
+import os 
 sheet_names_excel = ['2023-03-22',
  '2023-03-23',
  '2023-03-24',
@@ -12,11 +12,25 @@ sheet_names_excel = ['2023-03-22',
  '2023-03-28',
  '2023-03-29',
  '2023-03-30',
- '2023-03-31']
+ '2023-03-31',
+ '2023-04-06',
+ '2023-04-07',
+ '2023-04-08',
+ '2023-04-10',
+ '2023-04-13',
+ '2023-04-14',
+ '2023-04-15',
+ '2023-04-16',
+ '2023-04-17',
+ '2023-04-18',
+ '2023-04-19',]
+
 
 # Read the Excel file
-file_path = 'J298MCL001 - Strain Measurements First Setup.xlsx'
-excel_data = pd.read_excel(file_path, sheet_name=sheet_names_excel, engine='openpyxl')
+file_path = 'J298MCL001 - Strain Measurements.xlsx'
+file_out_path= os.path.join('..', 'Reference',file_path)
+
+excel_data = pd.read_excel(file_out_path, sheet_name=sheet_names_excel, engine='openpyxl')
 # Create a figure and axis to plot the data
 # Process each sheet in the Excel file
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
@@ -43,7 +57,7 @@ plt.setp(ax1.get_xticklabels(), rotation=45)
 
 unique_dates = np.unique(all_data)
 sorted_unique_dates = np.sort(unique_dates)
-
+ax1.yaxis.set_ticks(sorted_unique_dates)
 # Create custom bins for the histogram
 bins = [sorted_unique_dates[i] + pd.DateOffset(days=-0.5) for i in range(len(sorted_unique_dates))]
 bins.append(sorted_unique_dates[-1] + pd.DateOffset(days=0.5))

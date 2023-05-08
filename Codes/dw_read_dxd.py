@@ -124,11 +124,11 @@ def tranform_set_up2(resampled_data_123):
     coef3_1 = -0.47006209
     coef2_1 =  -0.18279188
     # new positio for 611 data 13
-    resampled_data_123['data13']  = resampled_data_123['data5'] 
+    resampled_data_123['data12']  = resampled_data_123['data5'] 
     # new positio for 612 data 14
-    resampled_data_123['data14']  = coef2_1*resampled_data_123['data13'] 
+    resampled_data_123['data13']  = coef2_1*resampled_data_123['data13'] 
     # new positio for 613 data 15
-    resampled_data_123['data15']  = coef3_1*resampled_data_123['data13'] 
+    resampled_data_123['data14']  = coef3_1*resampled_data_123['data13'] 
     
     #  new position for 883  // data10 is 881
     resampled_data_123['data11']  = coef3_1*resampled_data_123['data9'] 
@@ -185,13 +185,14 @@ def export_csc_set_up2(file_names,folder_output, PLT = False):
                 data_section = datasections_engine()
                 data_123 = get_alldata(selected_chanels,data_section)
                 resampled_data_123 = resample_data(data_123, 1000, 1)
-                resampled_data_123 = tranform_set_up2(resampled_data_123)
+            
+     
                 # plt.plot(resampled_data_123)
-                
                 output_path = folder_output + f"resampled_data_{_file_names[j][-20:]}_rosette_{i+1}.csv"
-                _header = "Date, Gauge 111, Gauge 112, Gauge 113, Gauge 331,Gauge 332,Gauge 333, Gauge 441,Gauge 442,Gauge 443,Gauge 991,Gauge 992,Gauge 993,Gauge 1011, Gauge 1012, Gauge 1013"
+                _header = "Date, Gauge 221, Gauge 222, Gauge 223, Gauge 551,Gauge 552,Gauge 553, Gauge 771,Gauge 772,Gauge 773,Gauge 881,Gauge 882,Gauge 883,Gauge 661, Gauge 662, Gauge 663"
                 np.savetxt(output_path, resampled_data_123,
-                           fmt="%s", delimiter=",", header=_header, comments="")
+                            fmt="%s", delimiter=",", header=_header, comments="")
+                
                 if PLT == True:    
                     ploting_chanels(selected_chanels, resampled_data_123)
                     title_fid = 'Gauges ' + str(selected_chanels) + _file_names[j][-20:]
@@ -313,21 +314,27 @@ dw.Width = 1024
 dw.Height = 768
 
 _dir = r"C:\Users\aleja\Documents\Cerrejon Data Analyis\dxd_files\06.04.2023_dxd_files\Set up 1 Cerrejon _00{}.dxd"
-a,b = 1,71
+a,b = 1,100
 file_names = file_nameautomate(_dir, a, b)
-# folder_output = file_names[0][:78] + "csv_06.04.2023/"
+folder_output = file_names[0][:78] + "csv_06.04.2023/"
 # data123 = plt_all_measurements3(file_names,folder_output)
-dw.LoadFile(file_names[3])
-channels  = [7,8,9]
-data_section = datasections_engine()
-stacked_data =  get_alldata(channels,data_section)
-data_rs1 = resample_data(stacked_data, 1000, 1)
-ploting_chanels(channels,data_rs1)
-# ploting_chanels(selected_chanels,stacked_data)
+export_csc_set_up2(file_names,folder_output, PLT = False)
 
-arr = np.array([tuple(x) for x in data_rs1[['data0', 'data1', 'data2']]], dtype=np.float64)
-means = np.mean(arr, axis=0)
-mean_data0 = np.mean(arr['data0'])
-normalized_means = means / mean_data0
+
+
+
+
+# dw.LoadFile(file_names[3])
+# channels  = [7,8,9]
+# data_section = datasections_engine()
+# stacked_data =  get_alldata(channels,data_section)
+# data_rs1 = resample_data(stacked_data, 1000, 1)
+# ploting_chanels(channels,data_rs1)
+# # ploting_chanels(selected_chanels,stacked_data)
+
+# arr = np.array([tuple(x) for x in data_rs1[['data0', 'data1', 'data2']]], dtype=np.float64)
+# means = np.mean(arr, axis=0)
+# mean_data0 = np.mean(arr['data0'])
+# normalized_means = means / mean_data0
 
         

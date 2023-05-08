@@ -9,13 +9,13 @@ csv_folder = os.path.join('..', 'dxd_files', '06.04.2023_dxd_files','csv_06.04.2
 csv_files = glob.glob(os.path.join(csv_folder, 'resampled_data_*_rosette_*.csv')) + \
             glob.glob(os.path.join(csv_folder, 'resampled_data_1 2.*.dxd_rosette_1.csv'))
 
-output_name =  'merged_data.xlsx'
+output_name =  'merged_data2.xlsx'
 # create an empty dictionary to store the data frames for each sheet
 dfs = {}
 
 # loop over the CSV files and read them into a dictionary of data frames
 for csv_file in csv_files:
-    print(csv_file)
+    # print(csv_file)
     # read the CSV into a data frame
     df = pd.read_csv(csv_file)
     
