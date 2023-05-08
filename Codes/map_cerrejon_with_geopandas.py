@@ -11,6 +11,7 @@ from sklearn.cluster import KMeans
 import numpy as np 
 import math 
 from scipy import stats
+import matplotlib.patches as mpatches
 
 def plot_corrdinates_web_mercator(df, PRT=False):
     geometry = [Point(xy) for xy in zip(df['PositionX'], df['PositionY'])]
@@ -154,27 +155,36 @@ def plot_all_main_clusters(df, n_clusters):
 
 
 def plot_all_subclusters(df, cluster_id):
-    colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'lime', 'navy']
-    
+    subclusters = ['loading_process', 'dumping_process', 'travelling_empty', 'travelling_full']
+    subcluster_colors = {'loading_process': 'red', 'dumping_process': 'blue', 'travelling_empty': 'green', 'travelling_full': 'orange'}
+
     geometry = [Point(xy) for xy in zip(df['PositionX'], df['PositionY'])]
     gdf = gpd.GeoDataFrame(df, geometry=geometry)
     gdf.crs = 'EPSG:3116'
     gdf_web_mercator = gdf.to_crs(epsg=3857)
     
+    gdf_cluster = gdf_web_mercator[gdf_web_mercator['Cluster'] == cluster_id]
+    
     fig, ax = plt.subplots(figsize=(10, 10))
     
-    subcluster_ids = df[df['Cluster'] == cluster_id]['Subcluster'].unique()
-    
-    for subcluster_id in subcluster_ids:
-        gdf_subcluster = gdf_web_mercator[(gdf_web_mercator['Cluster'] == cluster_id) & (gdf_web_mercator['Subcluster'] == subcluster_id)]
-        gdf_subcluster.plot(ax=ax, markersize=5, marker='x', edgecolor='black', color=colors[subcluster_id % len(colors)])
-        
+    for subcluster in subclusters:
+        gdf_subcluster = gdf_cluster[gdf_cluster['Subcluster'] == subcluster]
+        gdf_subcluster.plot(ax=ax, markersize=5, marker='x', edgecolor='black', color=subcluster_colors[subcluster])
+
+    # Create legend elements
+    legend_elements = [mpatches.Patch(color=subcluster_colors[subcluster], label=subcluster) for subcluster in subclusters]
+
+    # Add legend to the plot
+    ax.legend(handles=legend_elements, loc='upper left')
+
     ctx.add_basemap(ax, source=ctx.providers.Esri.WorldImagery, attribution="")
-    ax.set_xlim(gdf_web_mercator.geometry.bounds.minx.min() - 50, gdf_web_mercator.geometry.bounds.maxx.max() + 50)
-    ax.set_ylim(gdf_web_mercator.geometry.bounds.miny.min() - 50, gdf_web_mercator.geometry.bounds.maxy.max() + 50)
+    ax.set_xlim(gdf_cluster.geometry.bounds.minx.min() - 50, gdf_cluster.geometry.bounds.maxx.max() + 50)
+    ax.set_ylim(gdf_cluster.geometry.bounds.miny.min() - 50, gdf_cluster.geometry.bounds.maxy.max() + 50)
     plt.show()
+    return fig 
+
     
-def assign_clusters(file_path):
+def assign_clusters(file_path, look_ahead=2):
     # Read the Excel file
     df = pd.read_excel(file_path)
 
@@ -185,17 +195,20 @@ def assign_clusters(file_path):
     for i in range(1, len(df)):
         prev_payload = df.loc[i - 1, 'Payload']
         curr_payload = df.loc[i, 'Payload']
+        future_payloads = df.loc[i + 1 : i + look_ahead, 'Payload']
 
-        if prev_payload == 0 and curr_payload > 0:
+        if curr_payload > prev_payload and curr_payload > 0:
             df.loc[i, 'Cluster'] = 'loading_process'
-        elif prev_payload > 0 and curr_payload == 0:
+        elif any(curr_payload > future_payload for future_payload in future_payloads) and curr_payload > 0:
             df.loc[i, 'Cluster'] = 'dumping_process'
-        elif prev_payload == 0 and curr_payload == 0:
+        elif curr_payload == 0:
             df.loc[i, 'Cluster'] = 'travelling_empty'
-        elif prev_payload > 0 and curr_payload > 0:
+        elif curr_payload > 0:
             df.loc[i, 'Cluster'] = 'travelling_full'
 
     return df
+
+
 
 def assign_sub_clusters(df, vm_cluster):
     # Create a new column 'Subcluster' in the df DataFrame
@@ -261,8 +274,17 @@ file_path= os.path.join('..', 'Reference',file_name)
 vm_cluster = assign_clusters(file_path)
 fd_subcluster = assign_sub_clusters(df_no_outliers, vm_cluster)
 #%%
-plot_specific_subcluster(fd_subcluster, 1, 2)
+plot_specific_subcluster(fd_subcluster, 1,  'loading_process')
 # plot_all_main_clusters(df_no_outliers, n_clusters)
+if not os.path.exists('images'):
+    os.makedirs('images')
+for i in [0, 1, 2, 3, 4]:
+    try:
+        fig = plot_all_subclusters(fd_subcluster, i)
+        fig.savefig(f'images/cluster_{i}.png')
+    except:
+        print(i, "somethin happend")
+
 
 
 

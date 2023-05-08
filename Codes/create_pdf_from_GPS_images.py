@@ -1,51 +1,41 @@
-import math
-import matplotlib.pyplot as plt
-from PIL import Image
-import os
 import glob
+import math
+import os
+from PIL import Image
 from fpdf import FPDF
+import matplotlib.pyplot as plt
 
-output_folder = 'images'
-pdf = FPDF(orientation='P', unit='mm', format='A4')
-pdf.set_auto_page_break(auto=True, margin=15)
+# Get a list of all .svg files in the images folder
+image_files = sorted(glob.glob(os.path.join('images', '*.png')))
 
-grid_image_file = os.path.join(output_folder, 'grid_image.png')
-# Remove the grid image file
-try:
-# Remove the grid image file
-    os.remove(grid_image_file)
-except:
-    print('yo need to remove the grid_images')
+# Calculate the grid size for subplots (2 columns)
+num_rows = math.ceil(len(image_files) / 2)
 
-# Get a list of all .png files in the output_folder
-image_files = sorted(glob.glob(os.path.join(output_folder, '*.png')))
+fig, axes = plt.subplots(num_rows, 2, figsize=(10, 10 * num_rows))
 
-# Calculate the grid size for subplots
-grid_size = math.ceil(math.sqrt(len(image_files)))
-
-fig, axes = plt.subplots(grid_size, grid_size, figsize=(10, 10))
-
-
+# Display images in the subplots
 for idx, image_file in enumerate(image_files):
     img = Image.open(image_file)
     ax = axes.flatten()[idx]
     ax.axis('off')
     ax.imshow(img)
-    # Add subtitle with image name
     ax.set_title(os.path.splitext(os.path.basename(image_file))[0], fontsize=8)
 
 # Remove unused subplots
-for idx in range(len(image_files), grid_size * grid_size):
+for idx in range(len(image_files), num_rows * 2):
     axes.flatten()[idx].axis('off')
 
 plt.tight_layout()
 
-# Save the entire grid as a single image
-grid_image_file = os.path.join(output_folder, 'grid_image.png')
+# Save the entire grid as a single PNG image
+grid_image_file = os.path.join('images', 'grid_image.png')
 plt.savefig(grid_image_file, dpi=300)
 plt.close(fig)
 
-# Add the grid image to the PDF
+# Create a PDF and add the grid image
+pdf = FPDF(orientation='P', unit='mm', format='A4')
+pdf.set_auto_page_break(auto=True, margin=15)
+
 img = Image.open(grid_image_file)
 width, height = img.size
 
@@ -59,6 +49,5 @@ width, height = int(width * scale), int(height * scale)
 pdf.add_page()
 pdf.image(grid_image_file, x=(pdf.w - width) / 2, y=(pdf.h - height) / 2, w=width, h=height)
 
-
-
+# Save the PDF
 pdf.output('Truck_Location_Report.pdf', 'F')
