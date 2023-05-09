@@ -152,6 +152,8 @@ def plot_all_main_clusters(df, n_clusters):
     ax.set_xlim(gdf_web_mercator.geometry.bounds.minx.min() - 50, gdf_web_mercator.geometry.bounds.maxx.max() + 50)
     ax.set_ylim(gdf_web_mercator.geometry.bounds.miny.min() - 50, gdf_web_mercator.geometry.bounds.maxy.max() + 50)
     plt.show()
+    return fig
+    
 
 
 def plot_all_subclusters(df, cluster_id):
@@ -281,12 +283,13 @@ if not os.path.exists('images'):
 for i in [0, 1, 2, 3, 4]:
     try:
         fig = plot_all_subclusters(fd_subcluster, i)
-        fig.savefig(f'images/cluster_{i}.png')
+        fig.savefig(f'images/cluster_{i}.svg')
     except:
         print(i, "somethin happend")
 
 
-
+fig = plot_all_main_clusters(fd_subcluster,5)
+fig.savefig(f'images/all_cluster_{i}.svg')
 
 
 

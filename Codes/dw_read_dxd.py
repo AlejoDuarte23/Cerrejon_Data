@@ -304,21 +304,21 @@ def BB2(dump):
 
 # create the Dewesoft DCOM object
 dw = Dispatch("Dewesoft.App")
-sys.stdout.flush()
-dw.Init()
-dw.Enabled = 1
-dw.Visible = 1
-dw.Top = 0
-dw.Left = 0
-dw.Width = 1024 
-dw.Height = 768
+# sys.stdout.flush()
+# dw.Init()
+# dw.Enabled = 1
+# dw.Visible = 1
+# dw.Top = 0
+# dw.Left = 0
+# dw.Width = 1024 
+# dw.Height = 768
 
-_dir = r"C:\Users\aleja\Documents\Cerrejon Data Analyis\dxd_files\06.04.2023_dxd_files\Set up 1 Cerrejon _00{}.dxd"
-a,b = 1,100
-file_names = file_nameautomate(_dir, a, b)
-folder_output = file_names[0][:78] + "csv_06.04.2023/"
-# data123 = plt_all_measurements3(file_names,folder_output)
-export_csc_set_up2(file_names,folder_output, PLT = False)
+# _dir = r"C:\Users\aleja\Documents\Cerrejon Data Analyis\dxd_files\06.04.2023_dxd_files\Set up 1 Cerrejon _00{}.dxd"
+# a,b = 1,100
+# file_names = file_nameautomate(_dir, a, b)
+# folder_output = file_names[0][:78] + "csv_06.04.2023/"
+# # data123 = plt_all_measurements3(file_names,folder_output)
+# export_csc_set_up2(file_names,folder_output, PLT = False)
 
 
 
