@@ -239,6 +239,74 @@ def convert_to_df(data):
     data_df['timestamp'] = pd.to_datetime(data_df['timestamp'])
     return data_df
 
+
+def merge_dataframes(main, slave, main_ts_col, slave_ts_col, slave_cols_interest):
+    # Load data if the input is xlsx file
+    if isinstance(main, str):
+        main = pd.read_excel(main)
+    if isinstance(slave, str):
+        slave = pd.read_excel(slave)
+
+    # Ensure that the timestamp columns are in datetime format
+    main[main_ts_col] = pd.to_datetime(main[main_ts_col])
+    slave[slave_ts_col] = pd.to_datetime(slave[slave_ts_col])
+
+    # Initialize the result dataframe
+    result_df = main.copy()
+
+    # Iterate over the columns of interest in the slave dataframe
+    for col in slave_cols_interest:
+        # Create a temporary column in the result dataframe to store the interpolated data
+        result_df[col] = None
+
+        # Perform forward filling for the slave column
+        slave[col] = slave[col].fillna(method='ffill')
+
+        # Iterate over the result dataframe and assign the corresponding value from the slave dataframe
+        for index, row in result_df.iterrows():
+            slave_row = slave[(slave[slave_ts_col] <= row[main_ts_col])].iloc[-1]
+            result_df.at[index, col] = slave_row[col]
+
+    return result_df
+
+
+def plot_principal_stresses_clustered(df, sigma_1_col, sigma_2_col, tau, theta):
+    color_mapping = {
+        'loading_process': 'red',
+        'dumping_process': 'blue',
+        'travelling_empty': 'green',
+        'travelling_full': 'purple'
+    }
+    
+    fig, axes = plt.subplots(4, 1, figsize=(10, 6), sharex=True)
+    labels = ['Sigma 1', 'Sigma 2', 'Tau', 'Theta_p']
+    ylabels = ['Sigma 1 [Mpa]', 'Sigma 2 [Mpa]', 'Tau [Mpa]', 'Theta_p [°]']
+    
+    for i, col in enumerate([sigma_1_col, sigma_2_col, tau, theta]):
+        for cluster, color in color_mapping.items():
+            mask = df['Cluster'] == cluster
+            axes[i].scatter(df.loc[mask, 'Timestamp'], df.loc[mask, col], label=cluster, color=color, s=10)
+        axes[i].set_ylabel(ylabels[i])
+        axes[i].legend()
+    
+    axes[-1].set_xlabel('Timestamp')
+    plt.show()
+
+# Example usage
+
+
+
+# Example usage
+# main_df = 'result_df.xlsx'  # Replace with your main dataframe file or dataframe
+# slave_df = 'Vims_clustered.xlsx'
+# main_ts_col = 'Timestamp'
+# slave_ts_col = 'ReadTime'
+# slave_cols_interest = ['Left Front Suspension Cylinder', 'Left Rear Suspension Cylinder', 'Payload',
+#                        'Right Front Suspension Cylinder', 'Right Rear Suspension Cylinder', 'Cycle', 'Cluster']
+
+# output_df = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
+# print(output_df)
+
 # start_date = '2023-02-28 11:20:00.000'
 # end_date = '2023-02-28 11:36:44.000'
 # start_date = '2023-02-28 18:10:000'
