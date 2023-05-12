@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import detrend
 
+from map_cerrejon_with_geopandas import plot_specific_subcluster_bycycle
 
 
 rosettes_info = {
@@ -132,6 +133,36 @@ def get_rosette_data(rosette_id, setup):
 #     Kt = data['Kt']
 #     return SG_IDs, angles, Kt
 
+import numpy as np
+
+def plot_principal_stresses_von(df, sigma_1_col, sigma_2_col, tau_col):
+    # Calculate Von Mises stress
+    df['von_Mises'] = np.sqrt(df[sigma_1_col]**2 - df[sigma_1_col]*df[sigma_2_col] + df[sigma_2_col]**2 + 3*df[tau_col]**2)
+
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 6), sharex=True)
+
+    ax1.plot(df['Timestamp'], df[sigma_1_col], label='Sigma 1')
+    ax1.set_ylabel('Sigma 1 [Mpa]')
+    ax1.legend()
+
+    ax2.plot(df['Timestamp'], df[sigma_2_col], label='Sigma 2', color='red')
+    ax2.set_xlabel('Timestamp')
+    ax2.set_ylabel('Sigma 2 [Mpa]')
+    ax2.legend()
+
+    ax3.plot(df['Timestamp'], df[tau_col], label='Tau', color='green')
+    ax3.set_xlabel('Timestamp')
+    ax3.set_ylabel('Tau [Mpa]')
+    ax3.legend()
+    
+    ax4.plot(df['Timestamp'], df['von_Mises'], label='Von Mises', color='magenta')
+    ax4.set_xlabel('Timestamp')
+    ax4.set_ylabel('Von Mises [Mpa]')
+    ax4.legend()
+
+    plt.show()
+
+
 
 def resample_data2(df, rule='10L', columns=['AI A-1', 'AI A-2', 'AI A-3']):
     if not isinstance(df.index, pd.DatetimeIndex):
@@ -178,13 +209,15 @@ def solve_strain_system(df, columns, theta1, theta2, theta3, E, v, G, Kt,T = 'On
     epsx, epsy, gammaxy = x
     
     # Calculate principal strains and maximum shear strain
-    eps_max = (epsx + epsy)/2 + np.sqrt(((epsx - epsy)/2)**2 + (gammaxy/2)**2)
-    eps_min = (epsx + epsy)/2 - np.sqrt(((epsx - epsy)/2)**2 + (gammaxy/2)**2)
-    gamma_max = 2*np.sqrt(((epsx - epsy)/2)**2 + (gammaxy/2)**2)
+    eps_max = (epsx + epsy)/2 + np.sqrt(((epsx - epsy)/2)**2 + (gammaxy/2)**2)  +74.133/1e6
+    eps_min = (epsx + epsy)/2 - np.sqrt(((epsx - epsy)/2)**2 + (gammaxy/2)**2)-36.7545/1e6
+    gamma_max = 2*np.sqrt(((epsx - epsy)/2)**2 + (gammaxy/2)**2)+126.332/1e6
     
     # Calculate stress components
     sigma1 = (E/(1-v**2))*(eps_max + v*eps_min)
     sigma2 = (E/(1-v**2))*(eps_min + v*eps_max)
+   
+
     tau = G*gamma_max
     tan2_theta_p = 2*tau/(sigma1 - sigma2)
     theta_p = np.rad2deg(np.arctan(tan2_theta_p)/2)
@@ -240,6 +273,34 @@ def convert_to_df(data):
     return data_df
 
 
+# def merge_dataframes(main, slave, main_ts_col, slave_ts_col, slave_cols_interest):
+#     # Load data if the input is xlsx file
+#     if isinstance(main, str):
+#         main = pd.read_excel(main)
+#     if isinstance(slave, str):
+#         slave = pd.read_excel(slave)
+
+#     # Ensure that the timestamp columns are in datetime format
+#     main[main_ts_col] = pd.to_datetime(main[main_ts_col])
+#     slave[slave_ts_col] = pd.to_datetime(slave[slave_ts_col])
+
+#     # Initialize the result dataframe
+#     result_df = main.copy()
+
+#     # Iterate over the columns of interest in the slave dataframe
+#     for col in slave_cols_interest:
+#         # Create a temporary column in the result dataframe to store the interpolated data
+#         result_df[col] = None
+
+#         # Perform forward filling for the slave column
+#         slave[col] = slave[col].fillna(method='ffill')
+
+#         # Iterate over the result dataframe and assign the corresponding value from the slave dataframe
+#         for index, row in result_df.iterrows():
+#             slave_row = slave[(slave[slave_ts_col] <= row[main_ts_col])].iloc[-1]
+#             result_df.at[index, col] = slave_row[col]
+
+#     return result_df
 def merge_dataframes(main, slave, main_ts_col, slave_ts_col, slave_cols_interest):
     # Load data if the input is xlsx file
     if isinstance(main, str):
@@ -264,11 +325,12 @@ def merge_dataframes(main, slave, main_ts_col, slave_ts_col, slave_cols_interest
 
         # Iterate over the result dataframe and assign the corresponding value from the slave dataframe
         for index, row in result_df.iterrows():
-            slave_row = slave[(slave[slave_ts_col] <= row[main_ts_col])].iloc[-1]
-            result_df.at[index, col] = slave_row[col]
+            slave_rows = slave[(slave[slave_ts_col] <= row[main_ts_col])]
+            if not slave_rows.empty:
+                slave_row = slave_rows.iloc[-1]
+                result_df.at[index, col] = slave_row[col]
 
     return result_df
-
 
 def plot_principal_stresses_clustered(df, sigma_1_col, sigma_2_col, tau, theta):
     color_mapping = {
@@ -291,6 +353,115 @@ def plot_principal_stresses_clustered(df, sigma_1_col, sigma_2_col, tau, theta):
     
     axes[-1].set_xlabel('Timestamp')
     plt.show()
+    
+# def plot_principal_stresses_clustered_cycle(df, cols, units):
+#     color_mapping = {
+#         'loading_process': 'red',
+#         'dumping_process': 'blue',
+#         'travelling_empty': 'yellow',
+#         'travelling_full': 'purple'
+#     }
+    
+#     fig, axes = plt.subplots(len(cols), 1, figsize=(10, 6 * len(cols)), sharex=True)
+    
+#     for i, col in enumerate(cols):
+#         for cluster, color in color_mapping.items():
+#             mask = df['Cluster'] == cluster
+#             axes[i].scatter(df.loc[mask, 'Timestamp'], df.loc[mask, col], label=cluster, color=color, s=10)
+#         axes[i].set_ylabel(f'{col} [{units[i]}]')
+#         axes[i].legend()
+    
+#     axes[-1].set_xlabel('Timestamp')
+#     plt.show()
+def plot_principal_stresses_clustered_cycle(df, cols, units):
+    # Calculate Von Mises stress
+    if 'Von Mises' not in df.columns:
+        df['Von Mises'] = np.sqrt(df['sigma_1']**2 - df['sigma_1']*df['sigma_2'] + df['sigma_2']**2 + 3*df['tau']**2)
+    
+    # Add 'Von Mises' to cols and its unit to units
+    if 'Von Mises' not in cols:
+        cols.append('Von Mises')
+        units.append('Mpa')
+
+    color_mapping = {
+        'loading_process': 'red',
+        'dumping_process': 'blue',
+        'travelling_empty': 'yellow',
+        'travelling_full': 'purple'
+    }
+    
+    fig, axes = plt.subplots(len(cols), 1, figsize=(10, 6 * len(cols)), sharex=True)
+    
+    for i, col in enumerate(cols):
+        for cluster, color in color_mapping.items():
+            mask = df['Cluster'] == cluster
+            axes[i].plot(df.loc[mask, 'Timestamp'], df.loc[mask, col], label=cluster, color=color, linewidth=2)
+        axes[i].set_ylabel(f'{col} [{units[i]}]')
+        axes[i].legend()
+    
+    axes[-1].set_xlabel('Timestamp')
+    plt.show()
+    
+def plot_principal_stresses_clustered_cycle2(df, cols, units):
+    # Calculate Von Mises stress
+    if 'Von Mises' not in df.columns:
+        df['Von Mises'] = np.sqrt(df['sigma_1']**2 - df['sigma_1']*df['sigma_2'] + df['sigma_2']**2 + 3*df['tau']**2)
+    
+    # Add 'Von Mises' to cols and its unit to units
+    if 'Von Mises' not in cols:
+        cols.append('Von Mises')
+        units.append('Mpa')
+
+    color_mapping = {
+        'loading_process': 'red',
+        'dumping_process': 'blue',
+        'travelling_empty': 'yellow',
+        'travelling_full': 'purple'
+    }
+    
+    fig, axes = plt.subplots(len(cols), 1, figsize=(10, 6 * len(cols)), sharex=True)
+    
+    for i, col in enumerate(cols):
+        # Plot gray line for all data
+        axes[i].plot(df['Timestamp'], df[col], color='gray', linewidth=1)
+        
+        for cluster, color in color_mapping.items():
+            mask = df['Cluster'] == cluster
+            axes[i].scatter(df.loc[mask, 'Timestamp'], df.loc[mask, col], label=cluster, color=color, s=10)
+        axes[i].set_ylabel(f'{col} [{units[i]}]')
+        axes[i].legend()
+    
+    axes[-1].set_xlabel('Timestamp')
+    plt.show()
+# def plot_cycle_data(df, cycle, cols, units, cluster_id, subcluster_id):
+#     df_cycle = df[df['Cycle'] == cycle]
+#     plot_principal_stresses_clustered_cycle(df_cycle, cols, units)
+#     plot_specific_subcluster_bycycle(df_cycle, cluster_id, subcluster_id)
+    
+
+
+def plot_cycle_data(df, cycle, cols, units):
+    # Filter dataframe by cycle
+    df_cycle = df[df['Cycle'] == cycle]
+    
+    # Plot the principal stresses
+    plot_principal_stresses_clustered_cycle(df_cycle, cols, units)
+    
+    # Plot the specific subcluster for the given cycle
+    plot_specific_subcluster_bycycle(df, cycle)
+
+
+def plot_cycle_data2(df, cycle, cols, units):
+    # Filter dataframe by cycle
+    df_cycle = df[df['Cycle'] == cycle]
+    
+    # Plot the principal stresses
+    plot_principal_stresses_clustered_cycle2(df_cycle, cols, units)
+    
+    # Plot the specific subcluster for the given cycle
+    plot_specific_subcluster_bycycle(df, cycle)
+
+
 
 # Example usage
 

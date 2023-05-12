@@ -132,7 +132,6 @@ def plot_specific_subcluster(df, cluster_id, subcluster_id):
     ax.set_title(f'Cluster {cluster_id} - Subcluster {subcluster_id}')
     plt.show()
 
-       
 
 def plot_all_main_clusters(df, n_clusters):
     colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'lime', 'navy']
@@ -231,6 +230,109 @@ def assign_sub_clusters(df, vm_cluster):
 
     return df
 
+# def plot_specific_subcluster_bycycle(df, cycle):
+#     # Filter dataframe by cycle
+#     df_cycle = df[df['Cycle'] == cycle]
+    
+#     geometry = [Point(xy) for xy in zip(df_cycle['PositionX'], df_cycle['PositionY'])]
+#     gdf = gpd.GeoDataFrame(df_cycle, geometry=geometry)
+#     gdf.crs = 'EPSG:3116'
+#     gdf_web_mercator = gdf.to_crs(epsg=3857)
+
+#     # Define color mapping for 'Cluster'
+#     color_mapping = {
+#         'loading_process': 'red',
+#         'dumping_process': 'blue',
+#         'travelling_empty': 'yellow',
+#         'travelling_full': 'purple'
+#     }
+    
+#     # Assign colors based on 'Cluster'
+#     gdf_web_mercator['color'] = gdf_web_mercator['Cluster'].map(color_mapping)
+
+#     fig, ax = plt.subplots(figsize=(10, 10))
+#     gdf_web_mercator.plot(ax=ax, markersize=15, marker='x', edgecolor='black', c=gdf_web_mercator['color'])
+
+#     ctx.add_basemap(ax, source=ctx.providers.Esri.WorldImagery, attribution="")
+#     ax.set_xlim(gdf_web_mercator.geometry.bounds.minx.min() - 50, gdf_web_mercator.geometry.bounds.maxx.max() + 50)
+#     ax.set_ylim(gdf_web_mercator.geometry.bounds.miny.min() - 50, gdf_web_mercator.geometry.bounds.maxy.max() + 50)
+#     ax.set_title(f'Cycle {cycle}')
+#     plt.show()
+
+# def plot_specific_subcluster_bycycle(df, cycle):
+#     # Filter dataframe by cycle
+#     df_cycle = df[df['Cycle'] == cycle]
+    
+#     geometry = [Point(xy) for xy in zip(df_cycle['PositionX'], df_cycle['PositionY'])]
+#     gdf = gpd.GeoDataFrame(df_cycle, geometry=geometry)
+#     gdf.crs = 'EPSG:3116'
+#     gdf_web_mercator = gdf.to_crs(epsg=3857)
+
+#     # Define color mapping for 'Cluster'
+#     color_mapping = {
+#         'loading_process': 'red',
+#         'dumping_process': 'blue',
+#         'travelling_empty': 'yellow',
+#         'travelling_full': 'purple'
+#     }
+    
+#     # Assign colors based on 'Cluster'
+#     gdf_web_mercator['color'] = gdf_web_mercator['Cluster'].map(color_mapping)
+
+#     # Add column to mark transition points
+#     gdf_web_mercator['transition'] = gdf_web_mercator['Cluster'].ne(gdf_web_mercator['Cluster'].shift())
+
+#     fig, ax = plt.subplots(figsize=(10, 10))
+#     gdf_web_mercator.plot(ax=ax, markersize=15, marker='x', edgecolor='black', c=gdf_web_mercator['color'])
+
+#     # Add markers for transition points
+#     gdf_web_mercator[gdf_web_mercator['transition']].plot(ax=ax, markersize=30, marker='o', color='black')
+
+#     ctx.add_basemap(ax, source=ctx.providers.Esri.WorldImagery, attribution="")
+#     ax.set_xlim(gdf_web_mercator.geometry.bounds.minx.min() - 50, gdf_web_mercator.geometry.bounds.maxx.max() + 50)
+#     ax.set_ylim(gdf_web_mercator.geometry.bounds.miny.min() - 50, gdf_web_mercator.geometry.bounds.maxy.max() + 50)
+#     ax.set_title(f'Cycle {cycle}')
+#     plt.show()
+def plot_specific_subcluster_bycycle(df, cycle):
+    # Filter dataframe by cycle
+    df_cycle = df[df['Cycle'] == cycle]
+    
+    geometry = [Point(xy) for xy in zip(df_cycle['PositionX'], df_cycle['PositionY'])]
+    gdf = gpd.GeoDataFrame(df_cycle, geometry=geometry)
+    gdf.crs = 'EPSG:3116'
+    gdf_web_mercator = gdf.to_crs(epsg=3857)
+
+    # Define color mapping for 'Cluster'
+    color_mapping = {
+        'loading_process': 'red',
+        'dumping_process': 'blue',
+        'travelling_empty': 'yellow',
+        'travelling_full': 'purple'
+    }
+    
+    # Assign colors based on 'Cluster'
+    gdf_web_mercator['color'] = gdf_web_mercator['Cluster'].map(color_mapping)
+
+    # Add column to mark transition points
+    gdf_web_mercator['transition'] = gdf_web_mercator['Cluster'].ne(gdf_web_mercator['Cluster'].shift())
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    gdf_web_mercator.plot(ax=ax, markersize=15, marker='x', edgecolor='black', c=gdf_web_mercator['color'])
+
+    # Add markers for transition points
+    transitions = gdf_web_mercator[gdf_web_mercator['transition']]
+    transitions.plot(ax=ax, markersize=30, marker='o', color='black')
+
+    # Add date annotations for transition points
+    for x, y, label in zip(transitions.geometry.x, transitions.geometry.y, transitions['Timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')):
+        ax.annotate(label, (x, y), textcoords="offset points", xytext=(0,10), ha='center',fontsize=18, color='cyan')
+
+    ctx.add_basemap(ax, source=ctx.providers.Esri.WorldImagery, attribution="")
+    ax.set_xlim(gdf_web_mercator.geometry.bounds.minx.min() - 50, gdf_web_mercator.geometry.bounds.maxx.max() + 50)
+    ax.set_ylim(gdf_web_mercator.geometry.bounds.miny.min() - 50, gdf_web_mercator.geometry.bounds.maxy.max() + 50)
+    ax.set_title(f'Cycle {cycle}')
+    plt.show()
+
 
 
 #%%
@@ -256,40 +358,40 @@ def assign_sub_clusters(df, vm_cluster):
     
 
 #%%
-file_name = 'Datos GPS equipo 022-429 - Abril 06-21 2023.xlsx'
-file_path= os.path.join('..', 'Reference',file_name)
-sheet_names = '20230406-20230421'
-df = pd.read_excel(file_path,sheet_name=sheet_names, engine='openpyxl',skiprows=1)
+# file_name = 'Datos GPS equipo 022-429 - Abril 06-21 2023.xlsx'
+# file_path= os.path.join('..', 'Reference',file_name)
+# sheet_names = '20230406-20230421'
+# df = pd.read_excel(file_path,sheet_name=sheet_names, engine='openpyxl',skiprows=1)
 
-n_clusters = 5
-n_subclusters = 10
+# n_clusters = 5
+# n_subclusters = 10
 
-df = perform_clustering(df, n_clusters, n_subclusters)
-# cluster_id = 1
-df_no_outliers = remove_outliers(df, 1)
-# plot_main_clusters(df_no_outliers, n_clusters)
-# plot_all_subclusters(df_no_outliers, 1)
+# df = perform_clustering(df, n_clusters, n_subclusters)
+# # cluster_id = 1
+# df_no_outliers = remove_outliers(df, 1)
+# # plot_main_clusters(df_no_outliers, n_clusters)
+# # plot_all_subclusters(df_no_outliers, 1)
 
-#%%
-file_name = 'Datos C429 - Ciclos pivoted abril.xlsx'
-file_path= os.path.join('..', 'Reference',file_name)
-vm_cluster = assign_clusters(file_path)
-fd_subcluster = assign_sub_clusters(df_no_outliers, vm_cluster)
-#%%
-plot_specific_subcluster(fd_subcluster, 1,  'loading_process')
-# plot_all_main_clusters(df_no_outliers, n_clusters)
-if not os.path.exists('images'):
-    os.makedirs('images')
-for i in [0, 1, 2, 3, 4]:
-    try:
-        fig = plot_all_subclusters(fd_subcluster, i)
-        fig.savefig(f'images/cluster_{i}.svg')
-    except:
-        print(i, "somethin happend")
+# #%%
+# file_name = 'Datos C429 - Ciclos pivoted abril.xlsx'
+# file_path= os.path.join('..', 'Reference',file_name)
+# vm_cluster = assign_clusters(file_path)
+# fd_subcluster = assign_sub_clusters(df_no_outliers, vm_cluster)
+# #%%
+# plot_specific_subcluster(fd_subcluster, 1,  'loading_process')
+# # plot_all_main_clusters(df_no_outliers, n_clusters)
+# if not os.path.exists('images'):
+#     os.makedirs('images')
+# for i in [0, 1, 2, 3, 4]:
+#     try:
+#         fig = plot_all_subclusters(fd_subcluster, i)
+#         fig.savefig(f'images/cluster_{i}.svg')
+#     except:
+#         print(i, "somethin happend")
 
 
-fig = plot_all_main_clusters(fd_subcluster,5)
-fig.savefig(f'images/all_cluster_{i}.svg')
+# fig = plot_all_main_clusters(fd_subcluster,5)
+# fig.savefig(f'images/all_cluster_{i}.svg')
 
 
 
