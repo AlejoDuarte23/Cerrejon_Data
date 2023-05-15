@@ -52,7 +52,7 @@ def calculate_distance(df):
     # Default movement to False
     df['Movement'] = False
     # If distance is more than 20, set movement to True
-    df.loc[df['Distance'] > 100, 'Movement'] = True
+    df.loc[df['Distance'] >100, 'Movement'] = True
 
     return df
 from itertools import groupby
@@ -130,7 +130,7 @@ from itertools import groupby
 #     return df
 from itertools import groupby
 
-def assign_clusters(df, min_stop_length=3):
+def assign_clusters(df, min_stop_length=1):
     df['Cluster'] = ''
 
     for name, group in df.groupby('Cycle'):
@@ -186,6 +186,7 @@ def assign_clusters(df, min_stop_length=3):
         df.loc[group.index, 'Cluster'] = clusters
 
     return df
+
 
 
 # def assign_clusters(df):

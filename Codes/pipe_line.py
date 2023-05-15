@@ -88,18 +88,20 @@ result_df = pd.DataFrame({
     'theta_p': sigmas[3]
 })
 
-plot_principal_stresses(result_df, 'sigma_1', 'sigma_2','tau','theta_p')
+# plot_principal_stresses(result_df, 'sigma_1', 'sigma_2','tau','theta_p')
 from _preprocesing import  merge_dataframes,plot_principal_stresses_clustered
 
 # rosette_data = get_rosette_data(rosette_name,Set_up1)
 
-# Example usage
-main_df = result_df # Replace with your main dataframe file or dataframe
-# slave_df = 'Vims_clustered.xlsx'
-# main_ts_col = 'Timestamp'
-# slave_ts_col = 'ReadTime'
-# slave_cols_interest = ['Left Front Suspension Cylinder', 'Left Rear Suspension Cylinder', 'Payload',
-#                        'Right Front Suspension Cylinder', 'Right Rear Suspension Cylinder', 'Cycle', 'Cluster']
+
+main_df = result_df
+slave_df = 'Vims_clustered.xlsx'
+main_ts_col = 'Timestamp'
+slave_ts_col = 'ReadTime'
+slave_cols_interest = ['Left Front Suspension Cylinder', 'Left Rear Suspension Cylinder', 'Payload',
+                        'Right Front Suspension Cylinder', 'Right Rear Suspension Cylinder', 'Cycle', 'Cluster','Ground Speed']
+output_df  = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
+
 
 # output_df = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
 # # with open("parse_data.pickle", "wb") as file:
@@ -110,22 +112,34 @@ main_df = result_df # Replace with your main dataframe file or dataframe
 # #%% adding cords to df 
 # with open("parse_data.pickle", "rb") as file:
 #     data_parsed=  pickle.load(file)
-    
+sw = 7890
+if  sw == 789:
 # ##############################################
-main_df =  result_df#data_parsed
-slave_df = 'cluster_mincka_way.xlsx'
+    main_df =  result_df#data_parsed
+    slave_df = 'cluster_mincka_way.xlsx'
+    main_ts_col = 'Timestamp'
+    slave_ts_col = 'Timestamp'
+    slave_cols_interest = ['Cluster','PositionX','PositionY','Cycle']
+    output_df_cords  = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
+    #  ####################################
+    from map_cerrejon_with_geopandas import plot_specific_subcluster_bycycle
+    from _preprocesing import  plot_cycle_data2
+    cols = [ 'PositionX']
+    units = [ '-']
+    plot_cycle_data2(output_df_cords, 530, cols, units)
+
+main_df =  output_df  
+slave_df = 'fd_subcluster_output.xlsx'
 main_ts_col = 'Timestamp'
 slave_ts_col = 'Timestamp'
-slave_cols_interest = ['Cluster','PositionX','PositionY','Cycle']
+slave_cols_interest = ['PositionX','PositionY']
 output_df_cords  = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
 #  ####################################
 from map_cerrejon_with_geopandas import plot_specific_subcluster_bycycle
 from _preprocesing import  plot_cycle_data2
-cols = [ 'PositionX']
-units = [ '-']
-plot_cycle_data2(output_df_cords, 530, cols, units)
-
-
+cols = [ 'PositionX','Payload','Ground Speed']
+units = [ '-','Ton','-']
+plot_cycle_data2(output_df_cords, 447, cols, units)
 
 # Use the function for a specific cycle
 # ####################################################
