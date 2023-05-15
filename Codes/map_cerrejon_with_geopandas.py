@@ -185,7 +185,66 @@ def plot_all_subclusters(df, cluster_id):
     return fig 
 
     
-def assign_clusters(file_path, look_ahead=2):
+# def assign_clusters(file_path, look_ahead=2):
+#     # Read the Excel file
+#     df = pd.read_excel(file_path)
+
+#     # Initialize the 'Cluster' column with empty strings
+#     df['Cluster'] = ''
+
+#     # Iterate through the rows to assign cluster labels
+#     for i in range(1, len(df)):
+#         prev_payload = df.loc[i - 1, 'Payload']
+#         curr_payload = df.loc[i, 'Payload']
+#         future_payloads = df.loc[i + 1 : i + look_ahead, 'Payload']
+
+#         if curr_payload > prev_payload and curr_payload > 0:
+#             df.loc[i, 'Cluster'] = 'loading_process'
+#         elif any(curr_payload > future_payload for future_payload in future_payloads) and curr_payload > 0:
+#             df.loc[i, 'Cluster'] = 'dumping_process'
+#         elif curr_payload == 0:
+#             df.loc[i, 'Cluster'] = 'travelling_empty'
+#         elif curr_payload > 0:
+#             df.loc[i, 'Cluster'] = 'travelling_full'
+
+#     return df
+# def assign_clusters(file_path):
+#     # Read the Excel file
+#     df = pd.read_excel(file_path)
+
+#     # Initialize the 'Cluster' column with empty strings
+#     df['Cluster'] = ''
+
+#     # Iterate through the rows to assign cluster labels
+#     for i in range(len(df) - 1):  # adjust range to avoid index error
+#         prev_payload = df.loc[i - 1, 'Payload'] if i > 0 else None  # handle first row
+#         curr_payload = df.loc[i, 'Payload']
+#         next_payload = df.loc[i + 1, 'Payload'] if i < len(df) - 1 else None  # handle last row
+#         curr_ground_speed = df.loc[i, 'Ground Speed']
+#         next_ground_speed = df.loc[i + 1, 'Ground Speed'] if i < len(df) - 1 else None  # handle last row
+#         last_cluster = df.loc[i - 1, 'Cluster'] if i > 0 else None  # handle first row
+
+#         if i > 0 and curr_payload > prev_payload:
+#             df.loc[i, 'Cluster'] = 'loading_process'
+#         elif curr_payload == 0 and curr_ground_speed > 0:
+#             df.loc[i, 'Cluster'] = 'travelling_empty'
+#         elif curr_payload > 0 and curr_ground_speed > 0:
+#             df.loc[i, 'Cluster'] = 'travelling_full'
+#         elif curr_payload == 0 and curr_ground_speed == 0 and next_ground_speed > 0 and next_payload == 0:
+#             df.loc[i, 'Cluster'] = 'travelling_empty'
+#         elif curr_payload > 0 and curr_ground_speed == 0 and next_payload == 0:
+#             df.loc[i, 'Cluster'] = 'dumping'
+#         elif curr_payload == 0 and curr_ground_speed == 0:
+#             if last_cluster == 'travelling_empty' or last_cluster == 'loading_process':
+#                 df.loc[i, 'Cluster'] = 'loading_process'
+#             elif last_cluster == 'travelling_full' or last_cluster == 'dumping':
+#                 df.loc[i, 'Cluster'] = 'dumping'
+#         elif curr_ground_speed == 0 and curr_payload == next_payload:
+#             df.loc[i, 'Cluster'] = 'loading_process'
+
+#     return df
+
+def assign_clusters(file_path):
     # Read the Excel file
     df = pd.read_excel(file_path)
 
@@ -193,21 +252,36 @@ def assign_clusters(file_path, look_ahead=2):
     df['Cluster'] = ''
 
     # Iterate through the rows to assign cluster labels
-    for i in range(1, len(df)):
-        prev_payload = df.loc[i - 1, 'Payload']
+    for i in range(len(df) - 1):  # adjust range to avoid index error
+        prev_payload = df.loc[i - 1, 'Payload'] if i > 0 else None  # handle first row
         curr_payload = df.loc[i, 'Payload']
-        future_payloads = df.loc[i + 1 : i + look_ahead, 'Payload']
+        next_payload = df.loc[i + 1, 'Payload'] if i < len(df) - 1 else None  # handle last row
+        curr_ground_speed = df.loc[i, 'Ground Speed']
+        next_ground_speed = df.loc[i + 1, 'Ground Speed'] if i < len(df) - 1 else None  # handle last row
+        last_cluster = df.loc[i - 1, 'Cluster'] if i > 0 else None  # handle first row
 
-        if curr_payload > prev_payload and curr_payload > 0:
+        if i > 0 and curr_payload > prev_payload and last_cluster != 'travelling_full':
             df.loc[i, 'Cluster'] = 'loading_process'
-        elif any(curr_payload > future_payload for future_payload in future_payloads) and curr_payload > 0:
-            df.loc[i, 'Cluster'] = 'dumping_process'
-        elif curr_payload == 0:
+        elif curr_payload == 0 and curr_ground_speed > 0:
             df.loc[i, 'Cluster'] = 'travelling_empty'
-        elif curr_payload > 0:
+        elif curr_payload > 0 and curr_ground_speed > 0:
             df.loc[i, 'Cluster'] = 'travelling_full'
+        elif curr_payload == 0 and curr_ground_speed == 0 and next_ground_speed > 0 and next_payload == 0:
+            df.loc[i, 'Cluster'] = 'travelling_empty'
+        elif curr_payload > 0 and curr_ground_speed == 0 and next_payload == 0 and last_cluster != 'travelling_empty':
+            df.loc[i, 'Cluster'] = 'dumping_process'
+        elif curr_payload == 0 and curr_ground_speed == 0:
+            if last_cluster == 'travelling_empty' or last_cluster == 'loading_process':
+                df.loc[i, 'Cluster'] = 'loading_process'
+            elif last_cluster == 'travelling_full' or last_cluster == 'dumping_process':
+                df.loc[i, 'Cluster'] = 'dumping_process'
+        elif curr_ground_speed == 0 and curr_payload == next_payload and last_cluster != 'travelling_full':
+            df.loc[i, 'Cluster'] = 'loading_process'
 
     return df
+
+
+
 
 
 
@@ -362,6 +436,7 @@ def plot_specific_subcluster_bycycle(df, cycle):
 # file_path= os.path.join('..', 'Reference',file_name)
 # sheet_names = '20230406-20230421'
 # df = pd.read_excel(file_path,sheet_name=sheet_names, engine='openpyxl',skiprows=1)
+# # df = df.sort_values(by='Timestamp', inplace=True)
 
 # n_clusters = 5
 # n_subclusters = 10
@@ -369,17 +444,19 @@ def plot_specific_subcluster_bycycle(df, cycle):
 # df = perform_clustering(df, n_clusters, n_subclusters)
 # # cluster_id = 1
 # df_no_outliers = remove_outliers(df, 1)
-# # plot_main_clusters(df_no_outliers, n_clusters)
-# # plot_all_subclusters(df_no_outliers, 1)
+# df_no_outliers = df_no_outliers.sort_values(by='Timestamp', inplace=True)
+# plot_main_clusters(df_no_outliers, n_clusters)
+# plot_all_subclusters(df_no_outliers, 1)
 
-# #%%
+#%%
 # file_name = 'Datos C429 - Ciclos pivoted abril.xlsx'
 # file_path= os.path.join('..', 'Reference',file_name)
 # vm_cluster = assign_clusters(file_path)
+# vm_cluster.to_excel('Vims_clustered.xlsx',index = False)
 # fd_subcluster = assign_sub_clusters(df_no_outliers, vm_cluster)
-# #%%
+#%%
 # plot_specific_subcluster(fd_subcluster, 1,  'loading_process')
-# # plot_all_main_clusters(df_no_outliers, n_clusters)
+# plot_all_main_clusters(df_no_outliers, n_clusters)
 # if not os.path.exists('images'):
 #     os.makedirs('images')
 # for i in [0, 1, 2, 3, 4]:

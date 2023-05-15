@@ -95,36 +95,41 @@ from _preprocesing import  merge_dataframes,plot_principal_stresses_clustered
 
 # Example usage
 main_df = result_df # Replace with your main dataframe file or dataframe
-slave_df = 'Vims_clustered.xlsx'
-main_ts_col = 'Timestamp'
-slave_ts_col = 'ReadTime'
-slave_cols_interest = ['Left Front Suspension Cylinder', 'Left Rear Suspension Cylinder', 'Payload',
-                       'Right Front Suspension Cylinder', 'Right Rear Suspension Cylinder', 'Cycle', 'Cluster']
+# slave_df = 'Vims_clustered.xlsx'
+# main_ts_col = 'Timestamp'
+# slave_ts_col = 'ReadTime'
+# slave_cols_interest = ['Left Front Suspension Cylinder', 'Left Rear Suspension Cylinder', 'Payload',
+#                        'Right Front Suspension Cylinder', 'Right Rear Suspension Cylinder', 'Cycle', 'Cluster']
 
-output_df = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
-# with open("parse_data.pickle", "wb") as file:
-#     pickle.dump(output_df, file)
-# plot_principal_stresses_clustered(output_df, 'sigma_1', 'sigma_2', 'tau', 'theta_p')
+# output_df = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
+# # with open("parse_data.pickle", "wb") as file:
+# #     pickle.dump(output_df, file)
+# # plot_principal_stresses_clustered(output_df, 'sigma_1', 'sigma_2', 'tau', 'theta_p')
 
 
 # #%% adding cords to df 
 # with open("parse_data.pickle", "rb") as file:
 #     data_parsed=  pickle.load(file)
     
-main_df = output_df#data_parsed
-slave_df = 'fd_subcluster_output.xlsx'
+# ##############################################
+main_df =  result_df#data_parsed
+slave_df = 'cluster_mincka_way.xlsx'
 main_ts_col = 'Timestamp'
 slave_ts_col = 'Timestamp'
-slave_cols_interest = ['Tajo','PositionX','PositionY']
+slave_cols_interest = ['Cluster','PositionX','PositionY','Cycle']
 output_df_cords  = merge_dataframes(main_df, slave_df, main_ts_col, slave_ts_col, slave_cols_interest)
+#  ####################################
+from map_cerrejon_with_geopandas import plot_specific_subcluster_bycycle
+from _preprocesing import  plot_cycle_data2
+cols = [ 'PositionX']
+units = [ '-']
+plot_cycle_data2(output_df_cords, 530, cols, units)
 
-# from map_cerrejon_with_geopandas import plot_specific_subcluster_bycycle
-from _preprocesing import  plot_cycle_data
-cols = ['sigma_1', 'sigma_2', 'tau', 'Payload']
-units = ['Mpa', 'Mpa', 'Mpa', 'Ton']
+
 
 # Use the function for a specific cycle
-plot_cycle_data(output_df_cords, 478, cols, units)
+# ####################################################
+# plot_cycle_data(output_df_cords, 478, cols, units)
 
 # def adjust_cluster_ids(df):
 #     eps = 0.001

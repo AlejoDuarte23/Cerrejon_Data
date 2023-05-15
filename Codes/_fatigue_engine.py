@@ -281,4 +281,26 @@ m = 3
 
 rainflow_df = add_Nfi_D_columns(rainflow_df, C_o, SD, d, m)
 
+def create_summary_df(df):
+    summary_df = df.groupby(['Cycle', 'Cluster']).agg({
+        'Nfi': 'sum',
+        'D': 'sum',
+        'mean': 'first',
+        'start_date': 'first',
+        'end_date': 'last'
+    }).reset_index()
+
+    # Flatten the MultiIndex columns
+    summary_df.columns = ['_'.join(col).strip() for col in summary_df.columns.values]
+
+    # Calculate duration in hours
+    summary_df['duration_hours'] = (summary_df['end_date_last'] - summary_df['start_date_first']).dt.total_seconds() / 3600
+
+    return summary_df
+
+# Example usage:
+# Assuming 'rainflow_df' is already defined and contains 'Cycle', 'Cluster', 'Nfi', 'D', 'mean', 'start_date', and 'end_date' columns
+summary_df = create_summary_df(rainflow_df)
+print(summary_df)
+
 
