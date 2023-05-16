@@ -251,8 +251,23 @@ def assign_clusters(file_path):
     # Initialize the 'Cluster' column with empty strings
     df['Cluster'] = ''
 
+    # Initialize counters for loading and dumping process
+    loading_counter = 0
+    dumping_counter = 0
+
     # Iterate through the rows to assign cluster labels
     for i in range(len(df) - 1):  # adjust range to avoid index error
+        # If counters are active, assign respective cluster and decrease counter
+        if loading_counter > 0:
+            df.loc[i, 'Cluster'] = 'loading_process'
+            loading_counter -= 1
+            continue
+        elif dumping_counter > 0:
+            df.loc[i, 'Cluster'] = 'dumping_process'
+            dumping_counter -= 1
+            continue
+
+        # Normal logic if no counters are active
         prev_payload = df.loc[i - 1, 'Payload'] if i > 0 else None  # handle first row
         curr_payload = df.loc[i, 'Payload']
         next_payload = df.loc[i + 1, 'Payload'] if i < len(df) - 1 else None  # handle last row
@@ -262,14 +277,18 @@ def assign_clusters(file_path):
 
         if i > 0 and curr_payload > prev_payload and last_cluster != 'travelling_full':
             df.loc[i, 'Cluster'] = 'loading_process'
+            loading_counter = 2  # Set counter to extend cluster assignment by two rows
+
         elif curr_payload == 0 and curr_ground_speed > 0:
             df.loc[i, 'Cluster'] = 'travelling_empty'
+
         elif curr_payload > 0 and curr_ground_speed > 0:
             df.loc[i, 'Cluster'] = 'travelling_full'
         elif curr_payload == 0 and curr_ground_speed == 0 and next_ground_speed > 0 and next_payload == 0:
             df.loc[i, 'Cluster'] = 'travelling_empty'
         elif curr_payload > 0 and curr_ground_speed == 0 and next_payload == 0 and last_cluster != 'travelling_empty':
             df.loc[i, 'Cluster'] = 'dumping_process'
+            dumping_counter = 2  # Set counter to extend cluster assignment by two rows
         elif curr_payload == 0 and curr_ground_speed == 0:
             if last_cluster == 'travelling_empty' or last_cluster == 'loading_process':
                 df.loc[i, 'Cluster'] = 'loading_process'
@@ -279,6 +298,8 @@ def assign_clusters(file_path):
             df.loc[i, 'Cluster'] = 'loading_process'
 
     return df
+
+
 
 
 
@@ -432,28 +453,28 @@ def plot_specific_subcluster_bycycle(df, cycle):
     
 
 #%%
-# file_name = 'Datos GPS equipo 022-429 - Abril 06-21 2023.xlsx'
-# file_path= os.path.join('..', 'Reference',file_name)
-# sheet_names = '20230406-20230421'
-# df = pd.read_excel(file_path,sheet_name=sheet_names, engine='openpyxl',skiprows=1)
-# # df = df.sort_values(by='Timestamp', inplace=True)
+file_name = 'Datos GPS equipo 022-429 - Abril 06-21 2023.xlsx'
+file_path= os.path.join('..', 'Reference',file_name)
+sheet_names = '20230406-20230421'
+df = pd.read_excel(file_path,sheet_name=sheet_names, engine='openpyxl',skiprows=1)
+# df = df.sort_values(by='Timestamp', inplace=True)
 
-# n_clusters = 5
-# n_subclusters = 10
+n_clusters = 5
+n_subclusters = 10
 
-# df = perform_clustering(df, n_clusters, n_subclusters)
-# # cluster_id = 1
+df = perform_clustering(df, n_clusters, n_subclusters)
+# cluster_id = 1
 # df_no_outliers = remove_outliers(df, 1)
 # df_no_outliers = df_no_outliers.sort_values(by='Timestamp', inplace=True)
 # plot_main_clusters(df_no_outliers, n_clusters)
 # plot_all_subclusters(df_no_outliers, 1)
 
 #%%
-# file_name = 'Datos C429 - Ciclos pivoted abril.xlsx'
-# file_path= os.path.join('..', 'Reference',file_name)
-# vm_cluster = assign_clusters(file_path)
-# vm_cluster.to_excel('Vims_clustered.xlsx',index = False)
-# fd_subcluster = assign_sub_clusters(df_no_outliers, vm_cluster)
+file_name = 'Datos C429 - Ciclos pivoted abril.xlsx'
+file_path= os.path.join('..', 'Reference',file_name)
+vm_cluster = assign_clusters(file_path)
+vm_cluster.to_excel('Vims_clustered.xlsx',index = False)
+fd_subcluster = assign_sub_clusters(df, vm_cluster)
 #%%
 # plot_specific_subcluster(fd_subcluster, 1,  'loading_process')
 # plot_all_main_clusters(df_no_outliers, n_clusters)

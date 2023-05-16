@@ -1,5 +1,5 @@
 
-
+import math
 import pandas as pd
 import numpy as np 
 import fatpack
@@ -258,7 +258,23 @@ def perform_rainflow11(df: pd.DataFrame) -> pd.DataFrame:
     results_df = pd.DataFrame(rows)
     return results_df
 
+import numpy as np
+
+def compute_delta_a(df, A=5.21e-13, m=4, a_prev=10**-4):
+    # Calculate Δσ_eq_AMPS_i
+    df['delta_sigma_eq_AMPS_i'] = df['range']
+
+    # Calculate ΔK
+    df['delta_K'] = 1.12 * df['delta_sigma_eq_AMPS_i'] * np.sqrt(np.pi * a_prev)
+
+    # Calculate Δa_i
+    df['delta_a_i'] = np.where(df['delta_K'] > 2, A * (df['delta_K']**m) * df['Ni'], 0)
+
+    return df
+
+
 rainflow_df = perform_rainflow11(output_df_amps)
+
 
 
 
@@ -291,12 +307,13 @@ def create_summary_df(df):
     }).reset_index()
 
     # Flatten the MultiIndex columns
-    summary_df.columns = ['_'.join(col).strip() for col in summary_df.columns.values]
+    summary_df.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in summary_df.columns.values]
 
     # Calculate duration in hours
-    summary_df['duration_hours'] = (summary_df['end_date_last'] - summary_df['start_date_first']).dt.total_seconds() / 3600
+    summary_df['duration_hours'] = (summary_df['end_date'] - summary_df['start_date']).dt.total_seconds() / 3600
 
     return summary_df
+
 
 # Example usage:
 # Assuming 'rainflow_df' is already defined and contains 'Cycle', 'Cluster', 'Nfi', 'D', 'mean', 'start_date', and 'end_date' columns
@@ -304,3 +321,77 @@ summary_df = create_summary_df(rainflow_df)
 print(summary_df)
 
 
+
+
+
+def calculate_af(K_IC, sigma_eq_AMPS_max):
+    af = (1/math.pi) * ((K_IC / (1.12 * sigma_eq_AMPS_max)) ** 2)
+    return af
+
+# usage:
+K_IC = 54  # replace with your value
+sigma_eq_AMPS_max = output_df_amps['AMPS'].abs().max()
+af = calculate_af(K_IC, sigma_eq_AMPS_max)
+af = 5*af
+print(f"The calculated value of af is {af}")
+
+
+rainflow_df = compute_delta_a(rainflow_df)
+ao = 10**-4
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+
+
+
+
+def compute_delta_a(df, A=5.21e-13, m=4, a_prev=10**-4 , af = 0.1086):
+    # Initialize a list to store delta_a_i and a_i values
+    delta_a_i_values = []
+    a_values = []
+    a_i = a_prev
+
+    i = 0
+    while a_i < af:
+        # Calculate Δσ_eq_AMPS_i
+        delta_sigma_eq_AMPS_i = df.loc[i, 'range']
+
+        # Calculate ΔK
+        delta_K = 1.12 * delta_sigma_eq_AMPS_i * np.sqrt(np.pi * a_prev)
+
+        # Calculate Δa_i and a_i
+        if delta_K > 2:
+            delta_a_i = A * (delta_K**m)
+        else:
+            delta_a_i = 0
+
+        a_i = delta_a_i + a_prev
+
+        # Update a_prev for next iteration
+        a_prev = a_i
+
+        # Add current delta_a_i and a_i to the lists
+        delta_a_i_values.append(delta_a_i)
+        a_values.append(a_i)
+
+        # Go to next row or loop back to first row if we're at the end
+        i = (i + 1) % len(df)
+        print(a_i)
+
+    # Create a new DataFrame for the results
+    result_df = pd.DataFrame({
+        'delta_a_i': delta_a_i_values,
+        'a_i': a_values,
+    })
+    
+    # Plot a_i values
+    plt.plot(result_df['a_i'])
+    plt.xlabel('Index')
+    plt.ylabel('a_i')
+    plt.show()
+
+    return result_df
